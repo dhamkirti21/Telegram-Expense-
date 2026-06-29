@@ -168,13 +168,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     finally:
         db.close()
 
-def main():
+def get_application():
     # Initialize the database
     init_db()
     
     if not TELEGRAM_BOT_TOKEN:
         logger.error("TELEGRAM_BOT_TOKEN is missing! Please set it in .env")
-        return
+        return None
 
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     
@@ -192,8 +192,10 @@ def main():
     
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    logger.info("Bot is starting up...")
-    application.run_polling()
+    return application
 
 if __name__ == '__main__':
-    main()
+    app = get_application()
+    if app:
+        logger.info("Bot is starting up in POLLING mode...")
+        app.run_polling()

@@ -6,6 +6,12 @@ from datetime import datetime
 from sqlalchemy import func
 from finance_bot.database import SessionLocal
 from finance_bot.models.transaction import Transaction
+from telegram import Update
+from finance_bot.bot import get_application
+import json
+
+# Global reference for the Telegram application
+bot_app = get_application()
 
 app = FastAPI(title="Personal Finance Dashboard")
 
@@ -48,3 +54,35 @@ async def dashboard(request: Request):
         )
     finally:
         db.close()
+
+@app.post("/webhook")
+async def telegram_webhook(request: Request):
+    """Receive incoming updates from Telegram"""
+    if not bot_app:
+        return {"error": "Bot app not initialized"}
+        
+    # Initialize the app once per Vercel instance if needed
+    if not bot_app.bot_data.get("_initialized"):
+        await bot_app.initialize()
+        bot_app.bot_data["_initialized"] = True
+        
+    try:
+        data = await request.json()
+        update = Update.de_json(data, bot_app.bot)
+        await bot_app.process_update(update)
+        return {"status": "ok"}
+    except Exception as e:
+        print(f"Error processing webhook: {e}")
+        return {"error": str(e)}
+
+@app.get("/set_webhook")
+async def set_webhook(url: str):
+    """Set the Telegram webhook URL"""
+    if not bot_app:
+        return {"error": "Bot app not initialized"}
+        
+    success = await bot_app.bot.set_webhook(url=url)
+    if success:
+        return {"message": f"Webhook successfully set to {url}"}
+    else:
+        return {"error": "Failed to set webhook"}
