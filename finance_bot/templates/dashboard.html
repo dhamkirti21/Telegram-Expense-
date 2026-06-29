@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+    <div class="max-w-6xl mx-auto p-6">
+        <h1 class="text-3xl font-bold mb-8 text-center text-indigo-700">Personal Finance Dashboard</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6 border-t-4 border-green-500">
+                <h2 class="text-sm font-semibold text-gray-500 uppercase">Monthly Income (Credit)</h2>
+                <p class="text-3xl font-bold text-green-600 mt-2">₹{{ "%.2f"|format(income) }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 border-t-4 border-red-500">
+                <h2 class="text-sm font-semibold text-gray-500 uppercase">Monthly Expense (Debit)</h2>
+                <p class="text-3xl font-bold text-red-600 mt-2">₹{{ "%.2f"|format(expense) }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 border-t-4 border-blue-500">
+                <h2 class="text-sm font-semibold text-gray-500 uppercase">Net Savings</h2>
+                <p class="text-3xl font-bold text-blue-600 mt-2">₹{{ "%.2f"|format(savings) }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Chart Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4">Credit vs Debit ({{ month }})</h2>
+                <div class="relative h-64">
+                    <canvas id="financeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Transactions Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4">Recent Transactions</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-gray-600">
+                            <tr>
+                                <th class="px-4 py-2">Date</th>
+                                <th class="px-4 py-2">Merchant</th>
+                                <th class="px-4 py-2">Category</th>
+                                <th class="px-4 py-2 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for tx in transactions %}
+                            <tr>
+                                <td class="px-4 py-3">{{ tx.date.strftime('%Y-%m-%d') }}</td>
+                                <td class="px-4 py-3 font-medium">{{ tx.merchant }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 py-1 bg-gray-100 rounded text-xs">{{ tx.category }}</span>
+                                </td>
+                                <td class="px-4 py-3 text-right font-bold {% if tx.type == 'Expense' %}text-red-500{% else %}text-green-500{% endif %}">
+                                    {% if tx.type == 'Expense' %}-{% else %}+{% endif %}₹{{ "%.2f"|format(tx.amount) }}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="px-4 py-3 text-center text-gray-500">No transactions found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('financeChart').getContext('2d');
+        const financeChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Income (Credit)', 'Expense (Debit)'],
+                datasets: [{
+                    data: [{{ income }}, {{ expense }}],
+                    backgroundColor: ['#22c55e', '#ef4444'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
