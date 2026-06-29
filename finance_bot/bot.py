@@ -100,6 +100,17 @@ async def dashboard_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     finally:
         db.close()
 
+async def advice_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = await update.message.reply_text("🤔 Analyzing your transactions to generate savings advice... This might take a few seconds.")
+    history_json = get_transaction_history_json()
+    if history_json == "[]":
+        await msg.edit_text("You don't have any transactions yet to analyze!")
+        return
+        
+    prompt = "Please give me a comprehensive analysis of my spending, identify patterns, and provide actionable advice on how I can save money and improve my usage of money."
+    reply = get_financial_advice(history_json, prompt)
+    await msg.edit_text(reply, parse_mode='Markdown')
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     
@@ -177,6 +188,7 @@ def main():
     application.add_handler(CommandHandler('chart', chart_command))
     application.add_handler(CommandHandler('export', export_command))
     application.add_handler(CommandHandler('dashboard', dashboard_command))
+    application.add_handler(CommandHandler('advice', advice_command))
     
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     

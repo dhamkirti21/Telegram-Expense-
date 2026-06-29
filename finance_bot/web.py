@@ -34,13 +34,17 @@ async def dashboard(request: Request):
         # Get top 5 recent transactions
         recent_txs = db.query(Transaction).order_by(Transaction.date.desc()).limit(10).all()
 
-        return templates.TemplateResponse("dashboard.html", {
-            "request": request,
-            "month": today.strftime("%B %Y"),
-            "income": income,
-            "expense": expense,
-            "savings": income - expense,
-            "transactions": recent_txs
-        })
+        return templates.TemplateResponse(
+            request=request,
+            name="dashboard.html",
+            context={
+                "request": request,
+                "month": today.strftime("%B %Y"),
+                "income": income,
+                "expense": expense,
+                "savings": income - expense,
+                "transactions": recent_txs
+            }
+        )
     finally:
         db.close()
